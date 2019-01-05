@@ -99,7 +99,8 @@ namespace API.Controllers
 
         // POST: api/Gifts
         [HttpPost]
-        public async Task<IActionResult> PostGift([FromBody] Gift gift)
+        [Route("Create")]
+        public async Task<IActionResult> CreateGift([FromBody] Gift gift)
         {
             if (!ModelState.IsValid)
             {

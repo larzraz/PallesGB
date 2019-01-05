@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Enitities;
 using Enitities.Model;
 using System.Net.Http;
+using Newtonsoft.Json;
 
 namespace Web.Controllers
 {
@@ -28,7 +29,27 @@ namespace Web.Controllers
         public async Task<IActionResult> Index()
         {
             var request = new HttpRequestMessage(HttpMethod.Get,
-            "/gifts/allgifts");
+            "api/gifts/allgifts");
+            var client = _clientFactory.CreateClient("PallesGB");
+            var response = await client.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                var list = await response.Content.ReadAsAsync<List<Gift>>();
+                return View(list);
+            }
+
+            return View();
+           
+
+
+        }
+
+        [HttpGet]
+        [Route("/girlgifts")]
+        public async Task<IActionResult> GirlGifts()
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get,
+            "api/gifts/girlgifts");
             var client = _clientFactory.CreateClient("PallesGB");
             var response = await client.SendAsync(request);
 
@@ -69,13 +90,20 @@ namespace Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("GiftNumber,Title,Description,CreationDate,BoyGift,GirlGift")] Gift gift)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                _context.Add(gift);
-                await _context.SaveChangesAsync();
+                return BadRequest(ModelState);
+            }
+            var baseUrl = "http://localhost:60844/";           
+            var client = _clientFactory.CreateClient("PallesGB");  
+            var response = await client.PostAsJsonAsync($"{baseUrl}api/gifts/create", gift);
+            if (response.IsSuccessStatusCode)
+            {
+                var giftToSave = JsonConvert.DeserializeObject<Gift>(await response.Content.ReadAsStringAsync());
+              
                 return RedirectToAction(nameof(Index));
             }
-            return View(gift);
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Gifts/Edit/5
